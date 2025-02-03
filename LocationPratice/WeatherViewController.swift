@@ -64,6 +64,7 @@ class WeatherViewController: UIViewController {
         setupUI()
         setupConstraints()
         setupActions()
+        refreshButtonTapped()
     }
     
     // MARK: - UI Setup
@@ -114,12 +115,45 @@ class WeatherViewController: UIViewController {
     private func setRegionAndAnnotation(center: CLLocationCoordinate2D) {
         let region = MKCoordinateRegion(center: center, latitudinalMeters: 250, longitudinalMeters: 250)
         mapView.setRegion(region, animated: true)
+        
+        
+        mapView.removeAnnotations(mapView.annotations)
+        
+        let annotation = MKPointAnnotation()
+        //어노 테이션의 좌표를 받아온 좌표로 ! 현위치거나 새싹도봉이거나
+        annotation.coordinate = center
+        mapView.addAnnotation(annotation)
+        
     }
 
     
     @objc private func refreshButtonTapped() {
         // 날씨 새로고침 구현
+        if let coordinate = locationManager.location?.coordinate {
+            updateData(lat: coordinate.latitude, long: coordinate.longitude)
+        } else {
+            updateData(lat: 37.65370, long: 127.04740)
+        }
     }
+    
+    private func updateData(lat: Double, long: Double) {
+        NetworkManager.shared.getWeatherData(lat: lat, lon: long) { response in
+            switch response {
+            case .success(let success):
+                self.weatherInfoLabel.text = """
+                현재온도: \(success.main.temp)°C
+                최저온도: \(success.main.temp_min)°C
+                최고온도: \(success.main.temp_max)°C
+                습도: \(success.main.humidity)%
+                풍속: \(success.wind.speed)m/s
+                """
+            case .failure(let failure):
+                print(failure)
+                self.weatherInfoLabel.text = "날씨정보를 불러오지 못했습니다"
+            }
+        }
+    }
+    
     
     private func checkDeviceLocation() {
         DispatchQueue.global().async {
@@ -171,6 +205,11 @@ class WeatherViewController: UIViewController {
     
     
 }
+
+
+
+
+
 extension  WeatherViewController: CLLocationManagerDelegate {
     //위치를 가져온경우 -> 허용
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
