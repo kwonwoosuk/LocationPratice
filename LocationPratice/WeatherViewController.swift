@@ -10,12 +10,19 @@ import CoreLocation
 import SnapKit
 import MapKit
 
-class WeatherViewController: UIViewController {
+protocol PhotoViewControllerDelegate { //fiveweek PassDataDelegate
+    func imageReceived(_ vc: PhotoViewController, image: UIImage)
+}
+
+
+final class WeatherViewController: UIViewController {
     //latitude: 37.65370, longitude: 127.04740
     //현재온도, 최저온도, 최고온도, 습도, 풍속
     
     
     lazy var locationManager = CLLocationManager()
+    
+    let imageView = UIImageView()
     
     private let mapView: MKMapView = {
         let view = MKMapView()
@@ -58,6 +65,19 @@ class WeatherViewController: UIViewController {
         return button
     }()
     
+    private let photoButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setImage(UIImage(systemName: "photo"), for: .normal)
+        button.backgroundColor = .white
+        button.tintColor = .systemBlue
+        button.layer.cornerRadius = 25
+        button.layer.shadowColor = UIColor.black.cgColor
+        button.layer.shadowOffset = CGSize(width: 0, height: 2)
+        button.layer.shadowOpacity = 0.2
+        button.layer.shadowRadius = 4
+        return button
+    }()
+    
     // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -71,7 +91,12 @@ class WeatherViewController: UIViewController {
     private func setupUI() {
         view.backgroundColor = .white
         
-        [mapView, weatherInfoLabel, currentLocationButton, refreshButton].forEach {
+        [mapView,
+         weatherInfoLabel,
+         imageView,
+         currentLocationButton,
+         refreshButton,
+         photoButton].forEach {
             view.addSubview($0)
         }
     }
@@ -84,7 +109,14 @@ class WeatherViewController: UIViewController {
         
         weatherInfoLabel.snp.makeConstraints { make in
             make.top.equalTo(mapView.snp.bottom).offset(20)
-            make.leading.trailing.equalToSuperview().inset(20)
+            make.leading.equalToSuperview().inset(20)
+        }
+        
+        imageView.snp.makeConstraints { make in
+            make.top.equalTo(mapView.snp.bottom).offset(20)
+            make.trailing.equalToSuperview().inset(20)
+            make.leading.equalTo(weatherInfoLabel.snp.trailing).offset(20)
+            make.height.equalTo(120)
         }
         
         currentLocationButton.snp.makeConstraints { make in
@@ -98,13 +130,30 @@ class WeatherViewController: UIViewController {
             make.bottom.equalTo(view.safeAreaLayoutGuide).offset(-20)
             make.width.height.equalTo(50)
         }
+        
+        photoButton.snp.makeConstraints { make in
+            make.centerX.equalTo(view.safeAreaLayoutGuide)
+            make.bottom.equalTo(view.safeAreaLayoutGuide).offset(-20)
+            make.size.equalTo(50)
+        }
     }
     
     private func setupActions() {
         currentLocationButton.addTarget(self, action: #selector(currentLocationButtonTapped), for: .touchUpInside)
         refreshButton.addTarget(self, action: #selector(refreshButtonTapped), for: .touchUpInside)
+        photoButton.addTarget(self, action: #selector(photoButtonTapped), for: .touchUpInside)
         locationManager.delegate = self
     }
+    
+    
+    @objc // delegate
+    func photoButtonTapped() {
+        let vc = PhotoViewController()
+        vc.delegate = self // -> WeatherViewController 집어넣는 것 
+        navigationController?.pushViewController(vc, animated: true)
+    }
+    
+    
     
     // MARK: - Actions
     // 현재 위치
@@ -251,4 +300,13 @@ extension  WeatherViewController: CLLocationManagerDelegate {
         alert.addAction(cancel)
         present(alert, animated: true)
     }
+}
+
+extension WeatherViewController: PhotoViewControllerDelegate {
+    func imageReceived(_ vc: PhotoViewController, image: UIImage) {
+        imageView.image = image
+        navigationController?.popViewController(animated: true)
+    }
+    
+    
 }
