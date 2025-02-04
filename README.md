@@ -26,7 +26,7 @@ PHPickerViewController로 갤러리 접근
 UICollectionView로 선택된 사진 표시
 Delegate 패턴으로 WeatherViewController와 PhotoViewController 간 이미지 데이터 전달
 
-🚨 트러블슈팅
+## 🚨 트러블슈팅
 위치 권한 처리
 
 문제: 위치 권한 거부 시 앱 크래시
